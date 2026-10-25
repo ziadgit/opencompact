@@ -4,7 +4,7 @@ Paste a beauty product (link, ingredient list, or question). An AI agent tells y
 
 **This is v1**, following the v0 prototype — repo: [ziadgit/diamonds](https://github.com/ziadgit/diamonds), demo: [opencompact.ai.studio](https://opencompact.ai.studio/). v1 is a rebuild on Next.js 16, CopilotKit v2 and Gemini 4 Argon, with a deterministic rulebook that cross-checks the AI, a notebook of revisitable reviews and a React Three Fiber dupe stage.
 
-Live: [opencompact.vercel.app](https://opencompact.vercel.app)
+Live: [opencompact.vercel.app](https://opencompact.vercel.app) · What it is, explained: [opencompact.vercel.app/about](https://opencompact.vercel.app/about)
 
 ## Setup
 1. `npm install`
