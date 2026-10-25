@@ -77,7 +77,9 @@ export async function lintLabel(label: Label, category: Category, violatingIn: A
       }),
       { system: `Cite only from this rulebook or say "No specific rule found".\n${RULEBOOK}` },
     );
-    return { findings: [...findings.filter((f) => f.severity !== "OK"), ...extra.findings.slice(0, 2)].sort(bySeverity) };
+    const all = [...findings.filter((f) => f.severity !== "OK"), ...extra.findings.slice(0, 2)].sort(bySeverity);
+    // A clean label still gets a visible "OK" row rather than an empty card.
+    return { findings: all.length ? all : findings };
   } catch (e) {
     warn("lint_label", e);
     return { findings };

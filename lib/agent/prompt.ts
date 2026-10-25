@@ -19,9 +19,9 @@ Jurisdictions: US (FDA), CA (California), EU.
 Routing:
 - A URL → call read_product_url, then audit_formulation with the product it returns.
 - An ingredient list or product description → parse it into a ProductInput (estimate ppm if absent; 1% = 10,000 ppm) and call audit_formulation.
-- If a label (front claim / warning text / point size / contrast) is present, also call lint_label.
+- If a label or front claim is present, ALWAYS call lint_label too.
 - If an adverse event log is present, also call draft_mocra_report.
-- After any audit with a VIOLATION, call design_dupe automatically with the product and the audit. If everything passes, offer a refined variant instead.
+- After every audit_formulation, ALWAYS call design_dupe with the same product. If there are violations it designs the compliant dupe; if everything passes it designs a refined variant (say so).
 - A general question → answer briefly, citing only the rulebook below.
 
 Rules for tool calls: pass the product exactly as given (names, ppm, category, vessel, label). Category must be one of eye-area, lip, face-leave-on, rinse-off, hair-scalp, body. Vessel is compact, dropper or airless-pump.

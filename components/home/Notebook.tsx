@@ -3,10 +3,14 @@
 import Markdown from "react-markdown";
 import type { useRenderToolCall } from "@copilotkit/react-core/v2";
 import { findPresetInText } from "@/lib/presets";
-import { entryMessages, entrySummary, type Entry, type Msg } from "@/lib/notebook";
-import { JURISDICTIONS, type Overall } from "@/lib/schemas";
+import { entryMessages, entrySummary, notebookTitle, type Entry, type Msg, type Notebook } from "@/lib/notebook";
+import { JURISDICTIONS, type AuditResult, type Overall } from "@/lib/schemas";
 import { VERDICT_STYLE, ProgressLine } from "@/components/cards/Verdict";
 import { RulesOnlyResult } from "./RulesOnlyResult";
+import { LabelCard } from "@/components/cards/LabelCard";
+import { DupeSection } from "@/components/cards/DupeSection";
+import { lintLabelRules, violatingJurisdictions } from "@/lib/rules";
+import { deterministicDupe } from "@/lib/dupe";
 
 type RenderToolCall = ReturnType<typeof useRenderToolCall>;
 
@@ -64,6 +68,42 @@ export function NotebookIndex({ entries, messages, activeId, onJump, onClear }: 
         })}
       </ol>
     </nav>
+  );
+}
+
+/** All notebooks, newest first. The active one is marked; the rest open on click. */
+export function NotebookList({ notebooks, activeId, onOpen, onDelete }: { notebooks: Notebook[]; activeId: string; onOpen: (id: string) => void; onDelete: (id: string) => void }) {
+  return (
+    <div className="text-[13px]">
+      <div className="smallcaps mb-3 text-[12px] text-muted">Notebooks</div>
+      <ul className="space-y-0.5">
+        {[...notebooks].reverse().map((n) => {
+          const active = n.id === activeId;
+          return (
+            <li key={n.id} className="group flex items-center gap-1">
+              <button
+                onClick={() => onOpen(n.id)}
+                aria-current={active ? "true" : undefined}
+                className={`min-w-0 flex-1 rounded-[12px] px-3 py-2 text-left transition-colors hover:bg-[color-mix(in_srgb,var(--ink)_5%,transparent)] ${active ? "bg-[color-mix(in_srgb,var(--ink)_6%,transparent)]" : ""}`}
+              >
+                <span className="block truncate font-serif text-[15px] leading-tight text-ink">{notebookTitle(n)}</span>
+                <span className="mt-0.5 block text-[11px] text-muted">
+                  {new Date(n.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })} · {n.entries.length} review{n.entries.length === 1 ? "" : "s"}
+                  {active && " · open"}
+                </span>
+              </button>
+              <button
+                onClick={() => onDelete(n.id)}
+                aria-label={`Delete notebook ${notebookTitle(n)}`}
+                className="px-1.5 text-[12px] text-muted opacity-0 transition-opacity hover:text-[var(--violation)] focus:opacity-100 group-hover:opacity-100"
+              >
+                ✕
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
   );
 }
 
@@ -138,6 +178,36 @@ function AiEntryBody({ entry, messages, running, renderToolCall }: { entry: Entr
     <>
       {msgs.map((m) => (m.role === "assistant" ? <AssistantMessage key={m.id} m={m} messages={msgs} renderToolCall={renderToolCall} /> : null))}
       {waiting && <ProgressLine label="Reading your product…" />}
+      {!running && <RulebookFill msgs={msgs} />}
+    </>
+  );
+}
+
+/**
+ * The agent decides which tools to call. If a finished review has an audit but no label check or
+ * no dupe, fill those in from the deterministic rulebook so every review shows the full picture.
+ */
+function RulebookFill({ msgs }: { msgs: Msg[] }) {
+  const calls = msgs.flatMap((m) => m.toolCalls ?? []);
+  const auditCall = calls.find((tc) => tc.function.name === "audit_formulation");
+  const result = auditCall && msgs.find((m) => m.role === "tool" && m.toolCallId === auditCall.id);
+  let audit: AuditResult | null = null;
+  try {
+    audit = result && typeof result.content === "string" ? (JSON.parse(result.content) as AuditResult) : null;
+  } catch {
+    audit = null;
+  }
+  if (!audit?.product?.ingredients) return null;
+  const product = audit.product;
+  const needLabel = product.label && !calls.some((tc) => tc.function.name === "lint_label");
+  const needDupe = !calls.some((tc) => tc.function.name === "design_dupe");
+  if (!needLabel && !needDupe) return null;
+  return (
+    <>
+      {needLabel && product.label && (
+        <LabelCard lint={{ findings: lintLabelRules(product.label, product.category, violatingJurisdictions(audit.rows)) }} />
+      )}
+      {needDupe && <DupeSection dupe={deterministicDupe(product, audit)} />}
     </>
   );
 }

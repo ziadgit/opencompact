@@ -5,9 +5,9 @@ import { useEffect, useRef, useState } from "react";
 import { useAgent, useCopilotKit, useRenderToolCall } from "@copilotkit/react-core/v2";
 import { PRESETS, findPresetInText, presetMessage } from "@/lib/presets";
 import { parseIngredientText } from "@/lib/parse";
-import { entryMessages, loadNotebook, saveNotebook, type Entry, type Msg } from "@/lib/notebook";
+import { entryMessages, loadLibrary, newNotebook, saveLibrary, type Entry, type Msg, type Notebook } from "@/lib/notebook";
 import { ToolRenderers } from "./ToolRenderers";
-import { EntryCell, NotebookIndex } from "./Notebook";
+import { EntryCell, NotebookIndex, NotebookList } from "./Notebook";
 
 const uid = () => Math.random().toString(36).slice(2);
 const AI_DOWN =
@@ -22,8 +22,11 @@ export function Home() {
   const { agent, isReady } = useAgent();
   const { copilotkit } = useCopilotKit();
   const renderToolCall = useRenderToolCall();
-  // Home is rendered client-only, so the notebook can be read synchronously on first render.
-  const [saved] = useState(loadNotebook);
+  // Home is rendered client-only, so the library can be read synchronously on first render.
+  const [initial] = useState(loadLibrary);
+  const [saved] = useState(() => initial.notebooks.find((n) => n.id === initial.activeId)!);
+  const [notebooks, setNotebooks] = useState<Notebook[]>(initial.notebooks);
+  const [activeId, setActiveId] = useState(initial.activeId);
   const [entries, setEntries] = useState<Entry[]>(saved.entries);
   const [openIds, setOpenIds] = useState<Set<string>>(() => new Set(saved.entries.slice(-1).map((e) => e.id)));
   const [aiReady, setAiReady] = useState<boolean | null>(null);
@@ -55,9 +58,49 @@ export function Home() {
 
   const messages = (hydrated && agent ? agent.messages : saved.messages) as unknown as Msg[];
 
+  // The active notebook lives in `entries` + the agent; `notebooks` holds snapshots of the rest.
+  const withActive = (): Notebook[] =>
+    notebooks.map((n) => (n.id === activeId ? { ...n, entries, messages: [...messages] } : n));
+
   useEffect(() => {
-    if (hydrated && !running) saveNotebook(entries, messages);
-  }, [entries, messages, running, hydrated]);
+    if (!hydrated || running) return;
+    saveLibrary({
+      activeId,
+      notebooks: notebooks.map((n) => (n.id === activeId ? { ...n, entries, messages: [...messages] } : n)),
+    });
+  }, [notebooks, activeId, entries, messages, running, hydrated]);
+
+  function openNotebook(target: Notebook, all: Notebook[]) {
+    setNotebooks(all);
+    setActiveId(target.id);
+    setEntries(target.entries);
+    setOpenIds(new Set(target.entries.slice(-1).map((e) => e.id)));
+    agent?.setMessages(target.messages as never);
+    window.scrollTo({ top: 0 });
+  }
+
+  function startNotebook() {
+    if (running || entries.length === 0) return;
+    const fresh = newNotebook();
+    openNotebook(fresh, [...withActive(), fresh]);
+  }
+
+  function switchNotebook(id: string) {
+    if (running || id === activeId) return;
+    const all = withActive().filter((n) => n.entries.length || n.id === id);
+    const target = all.find((n) => n.id === id);
+    if (target) openNotebook(target, all);
+  }
+
+  function deleteNotebook(id: string) {
+    if (running) return;
+    const rest = withActive().filter((n) => n.id !== id);
+    if (id !== activeId) return setNotebooks(rest);
+    const next = rest.filter((n) => n.entries.length).at(-1) ?? newNotebook();
+    openNotebook(next, rest.some((n) => n.id === next.id) ? rest : [...rest, next]);
+  }
+
+  const pastNotebooks = withActive().filter((n) => n.entries.length);
 
   const lastId = entries.at(-1)?.id;
   useEffect(() => {
@@ -137,9 +180,25 @@ export function Home() {
         <Link href="/" className="font-serif text-[20px] tracking-tight text-ink">
           OpenCompact
         </Link>
-        <Link href="/about" className="text-[14px] text-muted transition-colors hover:text-ink">
-          About
-        </Link>
+        <nav className="flex items-center gap-4">
+          <button
+            onClick={startNotebook}
+            disabled={running || !started}
+            aria-label="New notebook"
+            title="New notebook"
+            className="group flex items-center gap-2 rounded-full border border-line px-3 py-1.5 text-[13px] text-muted transition-colors hover:border-[var(--ink)] hover:text-ink disabled:pointer-events-none disabled:opacity-40"
+          >
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden>
+              <path d="M9.5 1.75H4.25a1.5 1.5 0 0 0-1.5 1.5v9.5a1.5 1.5 0 0 0 1.5 1.5h7.5a1.5 1.5 0 0 0 1.5-1.5V5.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+              <path d="M5.5 1.75v12.5" stroke="currentColor" strokeWidth="1.2" />
+              <path d="M12.5 1v4M10.5 3h4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+            </svg>
+            <span className="hidden sm:inline">New notebook</span>
+          </button>
+          <Link href="/about" className="text-[14px] text-muted transition-colors hover:text-ink">
+            About
+          </Link>
+        </nav>
       </header>
 
       {aiReady === false && (
@@ -166,6 +225,11 @@ export function Home() {
               </button>
             ))}
           </div>
+          {pastNotebooks.length > 0 && (
+            <div className="mt-14 max-w-[420px]">
+              <NotebookList notebooks={pastNotebooks} activeId={activeId} onOpen={switchNotebook} onDelete={deleteNotebook} />
+            </div>
+          )}
         </main>
       )}
 
@@ -174,6 +238,11 @@ export function Home() {
           <aside className="hidden lg:block">
             <div className="sticky top-6 max-h-[calc(100dvh-220px)] overflow-y-auto">
               <NotebookIndex entries={entries} messages={messages} activeId={lastId ?? null} onJump={jump} onClear={clearAll} />
+              {pastNotebooks.length > 1 && (
+                <div className="mt-8 border-t border-line pt-5">
+                  <NotebookList notebooks={pastNotebooks} activeId={activeId} onOpen={switchNotebook} onDelete={deleteNotebook} />
+                </div>
+              )}
             </div>
           </aside>
 
@@ -182,6 +251,11 @@ export function Home() {
               <summary className="smallcaps cursor-pointer text-[12px] text-muted">Notebook · {entries.length} reviews</summary>
               <div className="mt-3">
                 <NotebookIndex entries={entries} messages={messages} activeId={lastId ?? null} onJump={jump} onClear={clearAll} />
+                {pastNotebooks.length > 1 && (
+                  <div className="mt-5 border-t border-line pt-4">
+                    <NotebookList notebooks={pastNotebooks} activeId={activeId} onOpen={switchNotebook} onDelete={deleteNotebook} />
+                  </div>
+                )}
               </div>
             </details>
             <div className="space-y-8">

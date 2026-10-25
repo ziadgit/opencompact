@@ -11,6 +11,7 @@ export function LabelCard({ lint }: { lint: LabelLint }) {
   return (
     <Card>
       <Eyebrow>Label review</Eyebrow>
+      {lint.findings.length === 0 && <p className="font-serif text-[18px] text-ink">No label issues found: the warning is legible and the claims are cosmetic.</p>}
       <ul className="divide-y divide-[var(--line)]">
         {lint.findings.map((f, i) => {
           const s = SEV[f.severity];

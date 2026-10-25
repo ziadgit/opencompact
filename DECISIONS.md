@@ -13,3 +13,5 @@ Autonomous build decisions, one line each.
 - Root cause of the M1 quota error: the shell exported a different (free-tier) GEMINI_API_KEY, and Next.js gives process env priority over .env.local. With `env -u GEMINI_API_KEY npm run start` the .env.local key is used and the full agent flow works (verified with all tools on P3). Documented in README.
 - M6 verified: read_product_url extracted a real INCI list from a live product page via Argon URL context.
 - Notebook: reviews persist in localStorage (entries + agent messages, max 40), restored into the agent once useAgent reports isReady; home renders client-only to read it synchronously.
+- Every audited review now shows a label check and a dupe: the prompt says ALWAYS, and the notebook fills either from the rulebook if the agent skips it. Clean labels show an OK row instead of an empty card.
+- Multiple notebooks (localStorage v2 library, v1 data migrated); New notebook button in the header.

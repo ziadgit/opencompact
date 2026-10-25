@@ -18,31 +18,57 @@ export type Entry =
   | { id: string; kind: "ai"; createdAt: number; prompt: string; userMessageId: string }
   | { id: string; kind: "rules"; createdAt: number; prompt: string; product: ProductInput | null; note?: string };
 
-type Saved = { version: 1; entries: Entry[]; messages: Msg[] };
+/** A notebook is a set of reviews plus the agent conversation behind them. */
+export type Notebook = { id: string; createdAt: number; entries: Entry[]; messages: Msg[] };
+export type Library = { activeId: string; notebooks: Notebook[] };
 
-const KEY = "opencompact.notebook.v1";
+const KEY_V1 = "opencompact.notebook.v1";
+const KEY = "opencompact.library.v2";
 const MAX_ENTRIES = 40;
+const MAX_NOTEBOOKS = 20;
 
-export function loadNotebook(): Saved {
+export const newNotebook = (): Notebook => ({ id: Math.random().toString(36).slice(2), createdAt: Date.now(), entries: [], messages: [] });
+
+export function loadLibrary(): Library {
   try {
     const raw = localStorage.getItem(KEY);
-    const data = raw ? (JSON.parse(raw) as Saved) : null;
-    if (data?.version === 1 && Array.isArray(data.entries)) return data;
+    const lib = raw ? (JSON.parse(raw) as Library) : null;
+    if (lib?.notebooks?.length && lib.notebooks.some((n) => n.id === lib.activeId)) return lib;
+    // Migrate the single v1 notebook, if any.
+    const v1 = JSON.parse(localStorage.getItem(KEY_V1) ?? "null") as { entries?: Entry[]; messages?: Msg[] } | null;
+    if (v1?.entries?.length) {
+      const nb = { ...newNotebook(), createdAt: v1.entries[0].createdAt, entries: v1.entries, messages: v1.messages ?? [] };
+      return { activeId: nb.id, notebooks: [nb] };
+    }
   } catch {
     // private mode or corrupted data: start fresh
   }
-  return { version: 1, entries: [], messages: [] };
+  const nb = newNotebook();
+  return { activeId: nb.id, notebooks: [nb] };
 }
 
-export function saveNotebook(entries: Entry[], messages: Msg[]) {
-  const kept = entries.slice(-MAX_ENTRIES);
-  const firstUserId = kept.find((e) => e.kind === "ai")?.userMessageId;
-  const start = firstUserId ? Math.max(0, messages.findIndex((m) => m.id === firstUserId)) : messages.length;
+/** Drop messages that no kept entry points at, so storage stays small. */
+function trim(nb: Notebook): Notebook {
+  const entries = nb.entries.slice(-MAX_ENTRIES);
+  const firstUserId = entries.find((e) => e.kind === "ai")?.userMessageId;
+  const start = firstUserId ? Math.max(0, nb.messages.findIndex((m) => m.id === firstUserId)) : nb.messages.length;
+  return { ...nb, entries, messages: nb.messages.slice(start) };
+}
+
+export function saveLibrary(lib: Library) {
+  const notebooks = lib.notebooks.filter((n) => n.entries.length || n.id === lib.activeId).slice(-MAX_NOTEBOOKS).map(trim);
   try {
-    localStorage.setItem(KEY, JSON.stringify({ version: 1, entries: kept, messages: messages.slice(start) } satisfies Saved));
+    localStorage.setItem(KEY, JSON.stringify({ activeId: lib.activeId, notebooks } satisfies Library));
+    localStorage.removeItem(KEY_V1);
   } catch {
     // quota exceeded: keep working in memory
   }
+}
+
+export function notebookTitle(nb: Notebook): string {
+  const first = nb.entries[0];
+  if (!first) return "Empty notebook";
+  return entrySummary(first, nb.messages).title + (nb.entries.length > 1 ? ` + ${nb.entries.length - 1}` : "");
 }
 
 /** The messages belonging to an AI entry: from its user message up to the next user message. */
