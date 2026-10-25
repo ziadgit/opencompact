@@ -11,9 +11,9 @@ const DupeStage = dynamic(() => import("@/components/dupe3d/DupeStage"), {
 
 export function DupeSection({ dupe }: { dupe: DupeResult }) {
   return (
-    <div className="rise relative left-1/2 w-[min(1100px,calc(100vw-32px))] -translate-x-1/2">
+    <div className="rise relative w-full xl:w-[calc(100%+272px)]">
       <DupeStage dupe={dupe} />
-      <div className="mx-auto mt-6 grid max-w-[720px] gap-6 sm:grid-cols-[1fr_auto]">
+      <div className="mt-6 grid max-w-[720px] gap-6 sm:grid-cols-[1fr_auto]">
         <div>
           <div className="smallcaps mb-2 text-[13px] text-muted">
             {dupe.alreadyCompliant ? "Already compliant — a refined variant" : `Swaps · ${dupe.dupe.brandName}`}

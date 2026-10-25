@@ -1,10 +1,10 @@
 import { Providers } from "./providers";
-import { Home } from "@/components/home/Home";
+import { HomeClient } from "@/components/home/HomeClient";
 
 export default function Page() {
   return (
     <Providers>
-      <Home />
+      <HomeClient />
     </Providers>
   );
 }

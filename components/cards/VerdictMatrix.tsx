@@ -57,7 +57,11 @@ function Row({ row, i, open, setOpen }: { row: AuditResult["rows"][number]; i: n
             <div className="text-[14px] text-ink">{row.inci}</div>
             <div className="mt-1 flex items-center gap-2 text-[12px] text-muted">
               <span className="font-mono">{row.percent}</span>
-              {row.role && <span>· {row.role}</span>}
+              {row.role && (
+                <span className="max-w-[150px] truncate" title={row.role}>
+                  · {row.role}
+                </span>
+              )}
               <SourceTag source={row.source} />
             </div>
           </td>
