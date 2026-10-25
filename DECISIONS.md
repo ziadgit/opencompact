@@ -5,3 +5,7 @@ Autonomous build decisions, one line each.
 - Brands from the original diamonds presets renamed to fictional names (no real-brand references).
 - Scaffolded via scratchpad dir (npm forbids `_scaffold` as a package name); removed `cacheComponents`/`partialPrefetching` from the default next.config to keep route handlers simple.
 - M1 smoke test: runtime + BuiltInAgent wiring works, but the provided key returns 429 "free tier limit 0" for gemini-4-argon. Model not substituted (rule 7); UI surfaces run errors and falls back to rules-only mode.
+- §2 table says Thioglycolic Acid / PPD are CA PASS, but §3 expects P3 CA VIOLATION: added California Sherman Law (Cal. H&S Code §111670) mirroring of FD&C §601 adulteration findings so CA follows US on TGA/PPD.
+- "Non-toxic / 100% clean" WARN is attached to the jurisdictions where an ingredient already violates (keeps P2 US = PASS).
+- `design_dupe` takes `{ product, brief? }` and re-runs the rulebook itself instead of having the model echo the whole AuditResult back.
+- Every tool has a deterministic rulebook fallback if the Argon call fails (e.g. quota), tagged `mode: "rules-only"`.
