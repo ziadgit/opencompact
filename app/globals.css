@@ -1,0 +1,113 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #F6F1EA;
+  --ink: #1C1A17;
+  --muted: #7A736A;
+  --line: #E4DCD1;
+  --card: #FBF8F4;
+  --pass: #5E7B5A;
+  --violation: #8E2A2A;
+  --review: #B7832F;
+  --accent: #C9A86A;
+  --us: #1F2A44;
+  --ca: #D9572B;
+  --eu: #2443A6;
+  --shadow: 0 1px 2px rgb(28 26 23 / 0.04), 0 8px 32px -12px rgb(28 26 23 / 0.12);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #121110;
+    --ink: #EFE9E1;
+    --muted: #9A928A;
+    --line: #2A2724;
+    --card: #1A1817;
+    --pass: #8DB187;
+    --violation: #D06A62;
+    --review: #E0AE5A;
+    --accent: #D8BD85;
+    --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 32px -12px rgb(0 0 0 / 0.6);
+  }
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-card: var(--card);
+  --color-pass: var(--pass);
+  --color-violation: var(--violation);
+  --color-review: var(--review);
+  --color-accent: var(--accent);
+  --color-us: var(--us);
+  --color-ca: var(--ca);
+  --color-eu: var(--eu);
+  --font-serif: var(--font-serif), "Fraunces", Georgia, serif;
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, monospace;
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+}
+
+body {
+  overflow-x: hidden;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+.smallcaps {
+  font-variant: all-small-caps;
+  letter-spacing: 0.08em;
+}
+
+.hairline-progress {
+  position: relative;
+  height: 1px;
+  overflow: hidden;
+  background: var(--line);
+}
+.hairline-progress::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 35%;
+  background: var(--ink);
+  animation: hairline 1.6s ease-in-out infinite;
+}
+@keyframes hairline {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(300%); }
+}
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.marquee-track {
+  animation: marquee 48s linear infinite;
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: none; }
+}
+.rise {
+  animation: rise 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
