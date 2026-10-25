@@ -1,4 +1,5 @@
 import type { Category, Cell, Ingredient, Jurisdiction } from "@/lib/schemas";
+import { EU_ANNEX_V_RULES } from "./generated/eu-annex-v";
 
 export type Rule = {
   id: string;
@@ -175,15 +176,18 @@ export const RULES: Rule[] = [
   },
 ];
 
+/** Hand-written rules first (they win on overlap), then rules Argon generated from the official EU Annex V table. */
+export const ALL_RULES: Rule[] = [...RULES, ...EU_ANNEX_V_RULES];
+
 const norm = (s: string) => s.toLowerCase().replace(/\s+/g, " ").trim();
 const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 /** Match an ingredient to a rule by INCI, CI number, CAS or alias (case-insensitive, whole words). */
-export function matchRule(ing: Pick<Ingredient, "inci" | "cas">): Rule | undefined {
+export function matchRule(ing: Pick<Ingredient, "inci" | "cas">, rules: Rule[] = ALL_RULES): Rule | undefined {
   const text = norm(ing.inci);
-  return RULES.find((r) => {
-    if (ing.cas && ing.cas.trim() === r.cas) return true;
-    if (text.includes(r.cas)) return true;
+  return rules.find((r) => {
+    if (r.cas && ing.cas && ing.cas.trim() === r.cas) return true;
+    if (r.cas && text.includes(r.cas)) return true;
     if (r.pattern?.test(text)) return true;
     return r.aliases.some((a) => new RegExp(`(^|[^a-z0-9])${escape(a)}($|[^a-z0-9])`).test(text));
   });

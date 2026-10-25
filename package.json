@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "rules:gen": "tsx scripts/gen-annex-v.mts",
+    "rules:eval": "tsx scripts/eval-annex-v.mts"
   },
   "dependencies": {
     "@copilotkit/react-core": "^1.80.0",

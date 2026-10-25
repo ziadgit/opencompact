@@ -15,3 +15,4 @@ Autonomous build decisions, one line each.
 - Notebook: reviews persist in localStorage (entries + agent messages, max 40), restored into the agent once useAgent reports isReady; home renders client-only to read it synchronously.
 - Every audited review now shows a label check and a dupe: the prompt says ALWAYS, and the notebook fills either from the rulebook if the agent skips it. Clean labels show an OK row instead of an empty card.
 - Multiple notebooks (localStorage v2 library, v1 data migrated); New notebook button in the header.
+- Rules-as-code slice: Argon generated 55 EU Annex V rules from official CosIng data; wired into ALL_RULES behind the hand rules. Eval: 89 mechanically derived cases; hand 49%, generated 100%, Argon-direct 100%.
