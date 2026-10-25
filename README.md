@@ -2,8 +2,6 @@
 
 Paste a beauty product (link, ingredient list, or question). An AI agent tells you whether it can be sold in the **US (FDA)**, **California** and the **EU**, explains why with citations, and designs a **compliant dupe** you can inspect in 3D next to the original. Every result is a draft, not legal advice.
 
-**This is v1**, following the v0 prototype — repo: [ziadgit/diamonds](https://github.com/ziadgit/diamonds), demo: [opencompact.ai.studio](https://opencompact.ai.studio/). v1 is a rebuild on Next.js 16, CopilotKit v2 and Gemini 4 Argon, with a deterministic rulebook that cross-checks the AI, a notebook of revisitable reviews and a React Three Fiber dupe stage.
-
 Live: [opencompact.vercel.app](https://opencompact.vercel.app) · What it is, explained: [opencompact.vercel.app/about](https://opencompact.vercel.app/about)
 
 ## Setup
@@ -44,3 +42,7 @@ The hand-written rulebook covers 10 ingredients. This experiment has Argon turn 
 - This is one annex at about 12K output tokens, not million-token scale.
 
 The full version covers every EU annex, the FDA color-additive regulations and the California statutes, with harder test cases and chunked and smaller-model baselines. The generated rules are already live in the app's rulebook, behind the hand-written ones.
+
+## History
+
+This is **v1**, following the v0 prototype — repo: [ziadgit/diamonds](https://github.com/ziadgit/diamonds), demo: [opencompact.ai.studio](https://opencompact.ai.studio/). v1 is a rebuild on Next.js 16, CopilotKit v2 and Gemini 4 Argon, with a deterministic rulebook that cross-checks the AI, a notebook of revisitable reviews and a React Three Fiber dupe stage.
