@@ -9,3 +9,4 @@ Autonomous build decisions, one line each.
 - "Non-toxic / 100% clean" WARN is attached to the jurisdictions where an ingredient already violates (keeps P2 US = PASS).
 - `design_dupe` takes `{ product, brief? }` and re-runs the rulebook itself instead of having the model echo the whole AuditResult back.
 - Every tool has a deterministic rulebook fallback if the Argon call fails (e.g. quota), tagged `mode: "rules-only"`.
+- 3D environment uses drei <Environment> with local Lightformers (no HDR download) so the stage works offline. Peel is a CPU page-curl on the label plane's vertices.

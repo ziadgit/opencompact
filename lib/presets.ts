@@ -7,7 +7,7 @@ export const PRESETS: Preset[] = [
     id: "neon-palette",
     chip: "Neon Eye Palette",
     product: {
-      name: "Lumière Riot Neon Eye Palette",
+      name: "Lumière Neon Eye Palette",
       category: "eye-area",
       vessel: "compact",
       ingredients: [
