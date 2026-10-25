@@ -9,11 +9,11 @@ import {
   lintLabelRules,
   mocraDueDate,
   overallFrom,
-  percent,
   ruleCheck,
   violatingJurisdictions,
 } from "@/lib/rules";
 import { deterministicDupe } from "@/lib/dupe";
+import { mocraFallback } from "@/lib/report";
 import {
   Category,
   Cell,
@@ -122,25 +122,7 @@ export async function designDupe(product: ProductInput, brief?: string): Promise
 export async function draftMocraReport(product: ProductInput, adverseEvents: string): Promise<MocraReport> {
   const serious = isSeriousAdverseEvent(adverseEvents);
   const dueBy = mocraDueDate(adverseEvents);
-  const fallback = [
-    `# MoCRA adverse event packet — ${product.name}`,
-    "",
-    `**Serious adverse event:** ${serious ? "Yes" : "No"}${serious ? ` — submit to FDA by **${dueBy}** (15 business days, 21 U.S.C. §364a).` : ""}`,
-    `**Batch:** ${product.batch ?? "not recorded"}`,
-    "",
-    "## Timeline",
-    ...adverseEvents.split("\n").filter(Boolean).map((l) => `- ${l.replace(/\d+yo (fe)?male/gi, "Adult consumer")}`),
-    "",
-    "## Suspected cause",
-    `- Ingredients flagged by the rulebook: ${ruleCheck(product).rows.filter((r) => Object.values(r.verdicts).some((v) => v.verdict === "VIOLATION")).map((r) => `${r.inci} (${percent(r.ppm)})`).join(", ") || "none"}.`,
-    "",
-    "## Follow-up questions",
-    "- Were other units from the same batch distributed? Quarantine and recall scope?",
-    "- Medical outcome at 7 and 30 days?",
-    "- Filling-line cleaning records for the shared line?",
-    "",
-    "_Draft, not legal advice._",
-  ].join("\n");
+  const { markdown: fallback } = mocraFallback(product, adverseEvents);
 
   try {
     const markdown = await argonText(

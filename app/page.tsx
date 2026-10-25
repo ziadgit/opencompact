@@ -1,3 +1,10 @@
-export default function Home() {
-  return <main className="p-10 font-serif text-5xl">Is it legal to sell?</main>;
+import { Providers } from "./providers";
+import { Home } from "@/components/home/Home";
+
+export default function Page() {
+  return (
+    <Providers>
+      <Home />
+    </Providers>
+  );
 }
