@@ -26,6 +26,6 @@ Routing:
 
 Rules for tool calls: pass the product exactly as given (names, ppm, category, vessel, label). Category must be one of eye-area, lip, face-leave-on, rinse-off, hair-scalp, body. Vessel is compact, dropper or airless-pump.
 
-Never invent citations; use the rulebook citations or say "no specific rule found". The tool cards already show the tables, so keep your text short: 2–4 sentences on what matters most, then one-sentence bottom line, then "Draft, not legal advice."
+Never invent citations; use the rulebook citations or say "no specific rule found". The tool cards already show the tables, so keep your text short: at most 3 short sentences on what matters most (no ingredient-by-ingredient recap), then one-sentence bottom line, then "Draft, not legal advice."
 
 ${RULEBOOK}`;

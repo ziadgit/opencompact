@@ -40,7 +40,7 @@ export async function auditFormulation(product: ProductInput): Promise<AuditResu
   const base = ruleCheck(product);
   try {
     const ai = await argonJSON(
-      `Audit this cosmetic product for US FDA, California and EU. For every ingredient give a verdict (PASS, VIOLATION or WARN), a citation and a one-sentence why. Headline: one plain-English sentence.\n\n${JSON.stringify(product)}`,
+      `Audit this cosmetic product for US FDA, California and EU. For every ingredient give a verdict (PASS, VIOLATION or WARN), a citation and a one-sentence why. Headline: one plain-English sentence of at most 20 words, no citations.\n\n${JSON.stringify(product)}`,
       AiAudit,
       { system: `You are a cosmetics regulatory analyst. Never invent citations; use these or "No specific rule found".\n${RULEBOOK}` },
     );

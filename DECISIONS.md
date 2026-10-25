@@ -10,3 +10,5 @@ Autonomous build decisions, one line each.
 - `design_dupe` takes `{ product, brief? }` and re-runs the rulebook itself instead of having the model echo the whole AuditResult back.
 - Every tool has a deterministic rulebook fallback if the Argon call fails (e.g. quota), tagged `mode: "rules-only"`.
 - 3D environment uses drei <Environment> with local Lightformers (no HDR download) so the stage works offline. Peel is a CPU page-curl on the label plane's vertices.
+- Root cause of the M1 quota error: the shell exported a different (free-tier) GEMINI_API_KEY, and Next.js gives process env priority over .env.local. With `env -u GEMINI_API_KEY npm run start` the .env.local key is used and the full agent flow works (verified with all tools on P3). Documented in README.
+- M6 verified: read_product_url extracted a real INCI list from a live product page via Argon URL context.
