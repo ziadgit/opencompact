@@ -31,8 +31,10 @@ const warn = (tool: string, e: unknown) => console.warn(`[${tool}] AI unavailabl
 
 // ---------- audit ----------
 
+// The AI gives a plain verdict; NEEDS_REVIEW is reserved for real AI-vs-rulebook disagreements.
+const AiCell = Cell.extend({ verdict: z.enum(["PASS", "VIOLATION", "WARN"]) });
 const AiAudit = z.object({
-  rows: z.array(z.object({ inci: z.string(), role: z.string(), US: Cell, CA: Cell, EU: Cell })),
+  rows: z.array(z.object({ inci: z.string(), role: z.string(), US: AiCell, CA: AiCell, EU: AiCell })),
   headline: z.string(),
 });
 
@@ -40,7 +42,7 @@ export async function auditFormulation(product: ProductInput): Promise<AuditResu
   const base = ruleCheck(product);
   try {
     const ai = await llmJSON(
-      `Audit this cosmetic product for US FDA, California and EU. For every ingredient give a verdict (PASS, VIOLATION or WARN), a citation and a one-sentence why. Headline: one plain-English sentence of at most 20 words, no citations.\n\n${JSON.stringify(product)}`,
+      `Audit this cosmetic product for US FDA, California and EU. For every ingredient give a verdict (PASS, VIOLATION or WARN), a citation and a one-sentence why. An ingredient no rule restricts at this level and product type is PASS with citation "No specific rule found"; most cosmetic ingredients are. Use WARN only for a specific concern you can name (a known limit, a product-type restriction, an identity mismatch), and VIOLATION only with a citation. Headline: one plain-English sentence of at most 20 words, no citations.\n\n${JSON.stringify(product)}`,
       AiAudit,
       { system: `You are a cosmetics regulatory analyst. Never invent citations; use these or "No specific rule found".\n${RULEBOOK}` },
     );

@@ -19,7 +19,9 @@ function parse<T>(result: string | undefined): T | null {
   }
 }
 
-function ToolError() {
+function ToolError({ result }: { result?: string }) {
+  // Malformed tool arguments are rejected before the tool runs, and the agent retries with fixed ones.
+  if (result?.startsWith("Error: Invalid input for tool")) return null;
   return <p className="font-serif text-[16px] italic text-muted">That step didn’t return a result.</p>;
 }
 
@@ -31,7 +33,7 @@ export function ToolRenderers() {
     render: ({ status, result }) => {
       if (status !== "complete") return <ProgressLine label="Reading the product page…" />;
       const p = parse<ProductInput>(result);
-      if (!p?.ingredients) return <ToolError />;
+      if (!p?.ingredients) return <ToolError result={result} />;
       return (
         <p className="rise text-[13px] text-muted">
           <span className="smallcaps">Read</span> · {p.name} · {p.ingredients.length} ingredients
@@ -47,7 +49,7 @@ export function ToolRenderers() {
     render: ({ status, result }) => {
       if (status !== "complete") return <ProgressLine label="Checking FDA, California and EU Annex III…" />;
       const a = parse<AuditResult>(result);
-      return a?.rows ? <VerdictMatrix audit={a} /> : <ToolError />;
+      return a?.rows ? <VerdictMatrix audit={a} /> : <ToolError result={result} />;
     },
   });
 
@@ -57,7 +59,7 @@ export function ToolRenderers() {
     render: ({ status, result }) => {
       if (status !== "complete") return <ProgressLine label="Reading the label…" />;
       const l = parse<LabelLint>(result);
-      return l?.findings ? <LabelCard lint={l} /> : <ToolError />;
+      return l?.findings ? <LabelCard lint={l} /> : <ToolError result={result} />;
     },
   });
 
@@ -67,7 +69,7 @@ export function ToolRenderers() {
     render: ({ status, result }) => {
       if (status !== "complete") return <ProgressLine label="Designing a compliant dupe…" />;
       const d = parse<DupeResult>(result);
-      return d?.dupe ? <DupeSection dupe={d} /> : <ToolError />;
+      return d?.dupe ? <DupeSection dupe={d} /> : <ToolError result={result} />;
     },
   });
 
@@ -77,7 +79,7 @@ export function ToolRenderers() {
     render: ({ status, result }) => {
       if (status !== "complete") return <ProgressLine label="Drafting the MoCRA report…" />;
       const r = parse<MocraReport>(result);
-      return r?.markdown ? <ReportCard report={r} /> : <ToolError />;
+      return r?.markdown ? <ReportCard report={r} /> : <ToolError result={result} />;
     },
   });
 

@@ -48,7 +48,7 @@ function getHandler() {
     prompt: SYSTEM_PROMPT,
     tools,
     maxSteps: 8,
-    maxOutputTokens: 8000,
+    maxOutputTokens: 16000,
   });
   const runtime = new CopilotRuntime({ agents: { default: agent } });
   handler = createCopilotRuntimeHandler({ runtime, basePath: "/api/copilotkit" });
