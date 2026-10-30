@@ -65,7 +65,7 @@ const FAQ = [
   ["Is this legal advice?", "No. Every result is a draft for a qualified regulatory professional to confirm. OpenCompact helps you find problems early and ask better questions."],
   ["Where do the citations come from?", "From a hard-coded rulebook of real rules — CFR sections, California Health & Safety Code, EU Annexes. The AI may only cite those, or say no specific rule was found."],
   ["What happens when the AI and the rulebook disagree?", "The cell turns amber and says NEEDS REVIEW, with both opinions shown. Disagreements are surfaced, never silently resolved."],
-  ["Does it work without an API key?", "Yes. Without a Gemini key the app runs in rules-only mode: presets and pasted ingredient lists are checked deterministically, and the dupe is designed from rulebook swaps."],
+  ["Does it work without an API key?", "Yes. Without an Anthropic API key, or once the day's AI budget is spent, the app runs in rules-only mode: presets and pasted ingredient lists are checked deterministically, and the dupe is designed from rulebook swaps."],
   ["Is the dupe a copy?", "No. It is a legally distinct product: a newly invented brand name, compliant ingredient swaps and positive, cosmetic-only claims. It never reuses a real brand."],
 ];
 
@@ -159,7 +159,7 @@ export default function About() {
           <p className="smallcaps text-[14px] opacity-60">How it works</p>
           <div className="mt-10 grid gap-x-10 gap-y-14 sm:grid-cols-2">
             {[
-              ["01", "Read the product", "Paste a link, an INCI list or a label. Gemini reads the real page."],
+              ["01", "Read the product", "Paste a link, an INCI list or a label. Claude reads the real page."],
               ["02", "Check three rulebooks", "Every ingredient against US FDA, California and EU rules, with citations."],
               ["03", "Cross-check AI against hard rules", "A deterministic rulebook audits the AI. Disagreements turn amber."],
               ["04", "Design the dupe", "Compliant swaps, a new brand, and a 3D vessel you can inspect."],
@@ -339,7 +339,7 @@ export default function About() {
             </span>
           </Link>
           <footer className="mt-24 flex flex-col justify-between gap-3 border-t border-white/15 pt-6 text-[13px] text-white/60 sm:flex-row">
-            <span>Reasoning by Google Gemini 4 Argon · Agent by CopilotKit</span>
+            <span>Reasoning by Claude Haiku 5.5 · Agent by CopilotKit</span>
             <span>Drafts, not legal advice.</span>
           </footer>
         </div>

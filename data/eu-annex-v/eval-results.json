@@ -18,11 +18,19 @@
    "coverage": "89/89"
   },
   {
-   "system": "C. Argon direct, no rule code",
-   "accuracy": 1,
-   "correct": 89,
+   "system": "D. Haiku-generated rulebook (55 rules)",
+   "accuracy": 0.966,
+   "correct": 86,
    "cases": 89,
-   "violationsCaught": "47/47",
+   "violationsCaught": "45/47",
+   "coverage": "86/89"
+  },
+  {
+   "system": "C. Claude Haiku 5.5 direct, no rule code",
+   "accuracy": 0.91,
+   "correct": 81,
+   "cases": 89,
+   "violationsCaught": "40/47",
    "coverage": "n/a"
   }
  ],

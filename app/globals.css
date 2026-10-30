@@ -121,7 +121,8 @@ body {
 .prose-report li { margin: 0.2em 0; }
 .prose-report strong { font-weight: 600; }
 .prose-report code { font-family: var(--font-mono); font-size: 0.9em; }
-.prose-report table { border-collapse: collapse; margin: 0.6em 0; }
+.prose-report table { display: block; max-width: 100%; overflow-x: auto; border-collapse: collapse; margin: 0.6em 0; font-size: 13px; }
+.prose-report th { text-align: left; font-weight: 600; }
 .prose-report td, .prose-report th { border: 1px solid var(--line); padding: 4px 8px; }
 
 .prose-chat p { margin: 0 0 0.7em; }

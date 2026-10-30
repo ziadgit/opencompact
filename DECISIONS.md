@@ -16,3 +16,9 @@ Autonomous build decisions, one line each.
 - Every audited review now shows a label check and a dupe: the prompt says ALWAYS, and the notebook fills either from the rulebook if the agent skips it. Clean labels show an OK row instead of an empty card.
 - Multiple notebooks (localStorage v2 library, v1 data migrated); New notebook button in the header.
 - Rules-as-code slice: Argon generated 55 EU Annex V rules from official CosIng data; wired into ALL_RULES behind the hand rules. Eval: 89 mechanically derived cases; hand 49%, generated 100%, Argon-direct 100%.
+- v1.1 (branch `claude-haiku`): the hackathon Gemini credit was temporary, so the agent and all tool calls moved to Claude Haiku 5.5 (`lib/agent/llm.ts`, Anthropic SDK structured outputs + web_fetch; agent via `@ai-sdk/anthropic` wrapped in a usage-metering middleware). No temperature: Haiku 5.5 rejects non-default sampling.
+- Daily spend cap: `lib/budget.ts` prices every model call's real token usage at Haiku rates and stores the UTC-day total in Upstash Redis (in-memory fallback without Redis). Over `DAILY_LIMIT_USD` (default $5) the run endpoint returns 503 and the UI drops to rules-only until 00:00 UTC. Plus `RUNS_PER_IP` (default 20) per IP per day.
+- Measured: one full review (audit + label + dupe + MoCRA) costs about $0.01 on Haiku, so $5 is roughly 500 reviews a day.
+- The shipped EU Annex V rulebook stays the Argon-generated one (100% on the eval). `rules:gen` now writes a Haiku version to `eu-annex-v.haiku.ts` for comparison: Haiku-generated 96.6%, Haiku direct 91% (missed 7/47 violations). Argon v1 results kept in `eval-results.argon.json`.
+- Haiku sometimes answered "None" for the dupe brand on unsafe products; the rulebook brand is kept in that case, and the prompt now says to always invent one.
+- MoCRA Markdown now renders GFM tables (remark-gfm).

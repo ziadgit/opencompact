@@ -11,7 +11,11 @@ import { EntryCell, NotebookIndex, NotebookList } from "./Notebook";
 
 const uid = () => Math.random().toString(36).slice(2);
 const AI_DOWN =
-  "The AI analyst is unavailable right now (the model returned an error or quota limit). Switching to rules-only mode — results below come from the deterministic rulebook.";
+  "The AI analyst is unavailable right now (the model returned an error, or today's AI budget is used up). Switching to rules-only mode — results below come from the deterministic rulebook.";
+const OFFLINE_NOTE: Record<string, string> = {
+  "daily-budget": "Today's AI budget is used up — rules-only until 00:00 UTC. Presets still run against the rulebook.",
+  "no-key": "Add ANTHROPIC_API_KEY to .env.local for the AI analyst. Presets still run against the rulebook.",
+};
 
 function rulesEntry(prompt: string, note?: string): Entry {
   const preset = findPresetInText(prompt) ?? PRESETS.find((p) => p.chip === prompt);
@@ -30,6 +34,7 @@ export function Home() {
   const [entries, setEntries] = useState<Entry[]>(saved.entries);
   const [openIds, setOpenIds] = useState<Set<string>>(() => new Set(saved.entries.slice(-1).map((e) => e.id)));
   const [aiReady, setAiReady] = useState<boolean | null>(null);
+  const [offlineReason, setOfflineReason] = useState("no-key");
   const [rulesOnly, setRulesOnly] = useState(false);
   const [input, setInput] = useState("");
   const [running, setRunning] = useState(false);
@@ -46,14 +51,18 @@ export function Home() {
     queueMicrotask(() => setHydrated(true));
   }, [agent, isReady, saved]);
 
-  useEffect(() => {
+  const checkStatus = () =>
     fetch("/api/status")
       .then((r) => r.json())
-      .then((s) => {
+      .then((s: { ai: boolean; reason?: string }) => {
         setAiReady(s.ai);
+        if (s.reason) setOfflineReason(s.reason);
         if (!s.ai) setRulesOnly(true);
       })
       .catch(() => setRulesOnly(true));
+
+  useEffect(() => {
+    checkStatus();
   }, []);
 
   const messages = (hydrated && agent ? agent.messages : saved.messages) as unknown as Msg[];
@@ -138,6 +147,7 @@ export function Home() {
       agent.setMessages(agent.messages.slice(0, before));
       const fallback = rulesEntry(t, AI_DOWN);
       setEntries((es) => es.map((e) => (e.id === entry.id ? { ...fallback, id: entry.id } : e)));
+      void checkStatus();
     }
     setRunning(false);
   }
@@ -204,7 +214,7 @@ export function Home() {
       {aiReady === false && (
         <div className="mx-auto mt-1 w-full max-w-[720px] px-4">
           <p className="rounded-full border border-line bg-card px-4 py-2 text-center text-[13px] text-muted">
-            <span className="smallcaps text-ink">Rules-only mode</span> · Add GEMINI_API_KEY to .env.local for the AI analyst. Presets still run against the rulebook.
+            <span className="smallcaps text-ink">Rules-only mode</span> · {OFFLINE_NOTE[offlineReason] ?? OFFLINE_NOTE["no-key"]}
           </p>
         </div>
       )}

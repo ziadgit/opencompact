@@ -6,19 +6,23 @@ Live: [opencompact.vercel.app](https://opencompact.vercel.app) · What it is, ex
 
 ## Setup
 1. `npm install`
-2. `cp .env.example .env.local` and set `GEMINI_API_KEY` (model: `gemini-4-argon`).
+2. `cp .env.example .env.local` and set `ANTHROPIC_API_KEY` (model: `claude-haiku-5-5`). Optional: Upstash Redis for the shared spend counter.
 3. `npm run dev` → http://localhost:3000 (and `/about`).
 4. No key? The app runs in **rules-only mode**: presets and pasted INCI lists are checked by the deterministic rulebook.
-5. Check the rulebook: `npx tsx scripts/check-presets.ts`. Note: a `GEMINI_API_KEY` exported in your shell overrides `.env.local` (`unset GEMINI_API_KEY` if it is a different key).
+5. Check the rulebook: `npx tsx scripts/check-presets.ts`. Note: a key exported in your shell overrides `.env.local`.
 
 ## Architecture
-- **Agent**: CopilotKit v2 `BuiltInAgent` (`google/gemini-4-argon`) served by `createCopilotRuntimeHandler` at `app/api/copilotkit/[[...slug]]`; five server tools in `lib/agent/tools.ts` (`read_product_url`, `audit_formulation`, `lint_label`, `design_dupe`, `draft_mocra_report`).
-- **Structured AI**: tools call Argon directly via `@google/genai` (`lib/agent/argon.ts`) with JSON schemas from zod 4, plus URL context for product pages.
-- **Trust layer**: `lib/rules/` is a hard-coded rulebook (ingredients, label, MoCRA). `crosscheck()` compares AI verdicts to it and marks disagreements `NEEDS_REVIEW`; every tool falls back to the rulebook if Argon fails.
+- **Agent**: CopilotKit v2 `BuiltInAgent` running Claude Haiku 5.5 (via `@ai-sdk/anthropic`) served by `createCopilotRuntimeHandler` at `app/api/copilotkit/[[...slug]]`; five server tools in `lib/agent/tools.ts` (`read_product_url`, `audit_formulation`, `lint_label`, `design_dupe`, `draft_mocra_report`).
+- **Structured AI**: tools call Claude directly via `@anthropic-ai/sdk` (`lib/agent/llm.ts`) with structured outputs from zod 4 schemas, plus web fetch for product pages.
+- **Trust layer**: `lib/rules/` is a hard-coded rulebook (ingredients, label, MoCRA). `crosscheck()` compares AI verdicts to it and marks disagreements `NEEDS_REVIEW`; every tool falls back to the rulebook if the model fails.
 - **UI**: `/` is a notebook of reviews on `useAgent`, with generative UI registered via `useRenderTool` (verdict matrix, label card, dupe stage, MoCRA report). Notebooks persist in localStorage; if the agent skips the label check or the dupe, the rulebook fills them in. `/about` is a static editorial page with a looping demo.
 - **3D**: `components/dupe3d/` — React Three Fiber stage with procedural compact / dropper / airless-pump vessels, instanced “Dupe it” particles, a peelable label, verdict halos and an SVG fallback without WebGL.
 
-## Rules-as-code with Gemini 4 Argon (first slice)
+## Spend cap
+
+The live app is public, so AI spend is capped at **$5 a day** (`DAILY_LIMIT_USD`). `lib/budget.ts` prices the real token usage of every model call (agent steps and tool calls) at Haiku rates and keeps a per-UTC-day total in Upstash Redis. Past the cap, the agent endpoint returns 503 and the app switches to rules-only mode until midnight UTC. Each IP also gets 20 AI reviews a day (`RUNS_PER_IP`). A full review costs about **$0.01**, so the cap covers roughly 500 reviews a day.
+
+## Rules-as-code (first slice, v1 with Gemini 4 Argon)
 
 The hand-written rulebook covers 10 ingredients. This experiment has Argon turn real regulation into rule code, then measures it against baselines.
 
@@ -31,6 +35,10 @@ The hand-written rulebook covers 10 ingredients. This experiment has Argon turn 
 | A. Hand-written rulebook (10 rules) | 49% | 2 / 47 | 3 / 89 |
 | B. Argon-generated rulebook (55 rules) | **100%** | **47 / 47** | 89 / 89 |
 | C. Argon answering directly, no rule code | 100% | 47 / 47 | — |
+| D. Haiku 5.5-generated rulebook (55 rules) | 97% | 45 / 47 | 86 / 89 |
+| E. Haiku 5.5 answering directly, no rule code | 91% | 40 / 47 | — |
+
+Rows D and E were added in v1.1 after the move to Claude Haiku 5.5 (generation: 10.6K in, 21.2K out, 72 s, about $0.01). The app still ships the Argon-generated rulebook (B). The gap between E and B is why the deterministic rulebook cross-checks every AI verdict.
 
 **What this shows:**
 - Generated rules lift the deterministic rulebook from 49% to 100% on this set.
@@ -45,4 +53,4 @@ The full version covers every EU annex, the FDA color-additive regulations and t
 
 ## History
 
-This is **v1**, following the v0 prototype — repo: [ziadgit/diamonds](https://github.com/ziadgit/diamonds), demo: [opencompact.ai.studio](https://opencompact.ai.studio/). v1 is a rebuild on Next.js 16, CopilotKit v2 and Gemini 4 Argon, with a deterministic rulebook that cross-checks the AI, a notebook of revisitable reviews and a React Three Fiber dupe stage.
+This is **v1.1**, following the v0 prototype — repo: [ziadgit/diamonds](https://github.com/ziadgit/diamonds), demo: [opencompact.ai.studio](https://opencompact.ai.studio/). v1 was a rebuild on Next.js 16, CopilotKit v2 and Gemini 4 Argon for a Google hackathon, with a deterministic rulebook that cross-checks the AI, a notebook of revisitable reviews and a React Three Fiber dupe stage. v1.1 moved the model to Claude Haiku 5.5 and added the daily spend cap.

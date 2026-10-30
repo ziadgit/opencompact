@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import type { MocraReport } from "@/lib/schemas";
 import { Card } from "./Verdict";
 
@@ -32,7 +33,7 @@ export function ReportCard({ report }: { report: MocraReport }) {
       </div>
       <div className="max-h-[420px] overflow-y-auto border-t border-line px-5 py-5 sm:px-7">
         <div className="prose-report text-[14px] leading-relaxed text-ink">
-          <Markdown>{report.markdown}</Markdown>
+          <Markdown remarkPlugins={[remarkGfm]}>{report.markdown}</Markdown>
         </div>
       </div>
       <div className="flex gap-2 border-t border-line px-5 py-3 sm:px-7">

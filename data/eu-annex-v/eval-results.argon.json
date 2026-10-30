@@ -1,0 +1,30 @@
+{
+ "cases": 89,
+ "results": [
+  {
+   "system": "A. Hand-written rulebook (10 rules)",
+   "accuracy": 0.494,
+   "correct": 44,
+   "cases": 89,
+   "violationsCaught": "2/47",
+   "coverage": "3/89"
+  },
+  {
+   "system": "B. Argon-generated rulebook (55 rules)",
+   "accuracy": 1,
+   "correct": 89,
+   "cases": 89,
+   "violationsCaught": "47/47",
+   "coverage": "89/89"
+  },
+  {
+   "system": "C. Argon direct, no rule code",
+   "accuracy": 1,
+   "correct": 89,
+   "cases": 89,
+   "violationsCaught": "47/47",
+   "coverage": "n/a"
+  }
+ ],
+ "bErrors": []
+}

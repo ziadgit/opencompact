@@ -1,6 +1,6 @@
 import { defineTool } from "@copilotkit/runtime/v2";
 import { z } from "zod";
-import { argonJSON, argonText } from "./argon";
+import { llmJSON, llmText } from "./llm";
 import { RULEBOOK } from "./prompt";
 import {
   crosscheck,
@@ -27,7 +27,7 @@ import {
   type MocraReport,
 } from "@/lib/schemas";
 
-const warn = (tool: string, e: unknown) => console.warn(`[${tool}] Argon unavailable, using rulebook:`, (e as Error).message?.slice(0, 160));
+const warn = (tool: string, e: unknown) => console.warn(`[${tool}] AI unavailable, using rulebook:`, (e as Error).message?.slice(0, 160));
 
 // ---------- audit ----------
 
@@ -39,7 +39,7 @@ const AiAudit = z.object({
 export async function auditFormulation(product: ProductInput): Promise<AuditResult> {
   const base = ruleCheck(product);
   try {
-    const ai = await argonJSON(
+    const ai = await llmJSON(
       `Audit this cosmetic product for US FDA, California and EU. For every ingredient give a verdict (PASS, VIOLATION or WARN), a citation and a one-sentence why. Headline: one plain-English sentence of at most 20 words, no citations.\n\n${JSON.stringify(product)}`,
       AiAudit,
       { system: `You are a cosmetics regulatory analyst. Never invent citations; use these or "No specific rule found".\n${RULEBOOK}` },
@@ -68,7 +68,7 @@ export async function lintLabel(label: Label, category: Category, violatingIn: A
   const bad = violatingIn ? (Object.keys(violatingIn) as (keyof typeof violatingIn)[]).filter((j) => violatingIn[j] === "VIOLATION") : [];
   const findings = lintLabelRules(label, category, bad);
   try {
-    const extra = await argonJSON(
+    const extra = await llmJSON(
       `Review this cosmetic front claim for drug claims (structure/function), fear-based or misleading claims not already covered. Claim: "${label.frontClaim}". Category: ${category}. Already flagged: ${findings.map((f) => f.title).join("; ") || "nothing"}. Return at most 2 new findings; return an empty list if none.`,
       z.object({
         findings: z.array(
@@ -102,11 +102,14 @@ const AiDupe = z.object({
 export async function designDupe(product: ProductInput, brief?: string): Promise<DupeResult> {
   const base = deterministicDupe(product, ruleCheck(product));
   try {
-    const ai = await argonJSON(
-      `Design a legally distinct, compliant "dupe" of this product. Invent a new brand name (never a real brand) and a product title. Write 2–3 positive, cosmetic (non-drug) claims. Pick vessel colors (hex) and finish (platinum, gold, obsidian or porcelain) for the original and an elevated dupe.\nIngredient swaps already chosen by the rulebook: ${base.swaps.map((s) => `${s.from} → ${s.to}`).join("; ") || "none (already compliant: offer a refined variant)"}.\n${brief ? `Brief: ${brief}\n` : ""}Product: ${JSON.stringify(product)}`,
+    const ai = await llmJSON(
+      `Design a legally distinct, compliant "dupe" of this product. Always invent a new brand name (never a real brand, never "None") and a product title, even when the original is unsafe: the dupe is the safe reformulation. Write 2–3 positive, cosmetic (non-drug) claims. Pick vessel colors (hex) and finish (platinum, gold, obsidian or porcelain) for the original and an elevated dupe.\nIngredient swaps already chosen by the rulebook: ${base.swaps.map((s) => `${s.from} → ${s.to}`).join("; ") || "none (already compliant: offer a refined variant)"}.\n${brief ? `Brief: ${brief}\n` : ""}Product: ${JSON.stringify(product)}`,
       AiDupe,
-      { temperature: 0.7 },
     );
+    // Small models sometimes answer "None" instead of inventing a name; keep the rulebook's brand then.
+    const named = (s: string) => s.trim().length > 1 && !/^(none|n\/a|null|unknown)$/i.test(s.trim());
+    if (!named(ai.brandName)) ai.brandName = base.dupe.brandName;
+    if (!named(ai.productTitle)) ai.productTitle = base.dupe.productTitle;
     return {
       ...base,
       original: { ...base.original, ...ai.original },
@@ -127,7 +130,7 @@ export async function draftMocraReport(product: ProductInput, adverseEvents: str
   const { markdown: fallback } = mocraFallback(product, adverseEvents);
 
   try {
-    const markdown = await argonText(
+    const markdown = await llmText(
       `Write a concise MoCRA serious adverse event packet in Markdown for FDA (MedWatch 3500A style). Sections: Summary (anonymize patients: age band and state only), Timeline, Suspected cause (link QC findings to ingredients), Actions taken, Follow-up questions. Serious: ${serious}. Due by ${dueBy}. End with "Draft, not legal advice."\nProduct: ${JSON.stringify(product)}\nLog:\n${adverseEvents}`,
       { system: RULEBOOK },
     );
@@ -141,7 +144,7 @@ export async function draftMocraReport(product: ProductInput, adverseEvents: str
 // ---------- URL ----------
 
 export async function readProductUrl(url: string): Promise<ProductInput> {
-  const product = await argonJSON(
+  const product = await llmJSON(
     `Read this product page: ${url}\nExtract the product name, category, the full INCI ingredient list (estimate ppm from list order if absent and set estimated: true), the front claims as label.frontClaim (use warningText "", warningPt 7, contrast 7, hiddenBehindPeel false if unknown), and the vessel archetype (compact, dropper or airless-pump). Set sourceUrl.`,
     ProductInput,
     { urlContext: true },
@@ -154,7 +157,7 @@ export async function readProductUrl(url: string): Promise<ProductInput> {
 export const tools = [
   defineTool({
     name: "read_product_url",
-    description: "Read a real product page with URL context and extract a ProductInput (name, category, INCI list with ppm, claims, vessel).",
+    description: "Fetch a real product page and extract a ProductInput (name, category, INCI list with ppm, claims, vessel).",
     parameters: z.object({ url: z.string().describe("Product page URL") }),
     execute: async ({ url }) => readProductUrl(url),
   }),

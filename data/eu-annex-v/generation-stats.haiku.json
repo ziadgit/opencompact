@@ -1,0 +1,8 @@
+{
+ "model": "claude-haiku-5-5",
+ "seconds": 71.607,
+ "inputTokens": 10595,
+ "outputTokens": 21192,
+ "costUsd": 0.0117,
+ "lines": 543
+}

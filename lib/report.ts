@@ -1,7 +1,7 @@
 import { isSeriousAdverseEvent, mocraDueDate, percent, ruleCheck } from "@/lib/rules";
 import type { MocraReport, ProductInput } from "@/lib/schemas";
 
-/** Deterministic MoCRA packet, used offline and as the fallback when Argon is unavailable. */
+/** Deterministic MoCRA packet, used offline and as the fallback when the model is unavailable. */
 export function mocraFallback(product: ProductInput, log: string): MocraReport {
   const serious = isSeriousAdverseEvent(log);
   const dueBy = mocraDueDate(log);

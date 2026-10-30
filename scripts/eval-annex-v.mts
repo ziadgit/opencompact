@@ -1,11 +1,13 @@
 /**
- * Scores three systems on test cases derived mechanically from the official EU Annex V table.
+ * Scores systems on test cases derived mechanically from the official EU Annex V table.
  *   A. hand-written rulebook (lib/rules/table.ts)
- *   B. Argon-generated rulebook (lib/rules/generated/eu-annex-v.ts)
- *   C. Argon answering each case directly, no rule code (how the app's AI audit works today)
+ *   B. Argon-generated rulebook (lib/rules/generated/eu-annex-v.ts, shipped in the app)
+ *   D. Haiku-generated rulebook (lib/rules/generated/eu-annex-v.haiku.ts, if `rules:gen` was run)
+ *   C. Claude Haiku 5.5 answering each case directly, no rule code (how the app's AI audit works today)
+ * The v1 run with Argon answering directly is kept in data/eu-annex-v/eval-results.argon.json.
  * Usage: npx tsx scripts/eval-annex-v.mts [--no-direct]
  */
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { z } from "zod";
 import { RULES, matchRule, type Rule } from "../lib/rules/table";
 import { EU_ANNEX_V_RULES } from "../lib/rules/generated/eu-annex-v";
@@ -43,9 +45,9 @@ function ruleVerdict(rules: Rule[], c: Case) {
 }
 
 async function directVerdicts(cases: Case[]) {
-  const { argonJSON } = await import("../lib/agent/argon");
+  const { llmJSON } = await import("../lib/agent/llm");
   const schema = z.object({ answers: z.array(z.object({ id: z.string(), EU: z.enum(["PASS", "VIOLATION"]) })) });
-  const out = await argonJSON(
+  const out = await llmJSON(
     `For each case, is this preservative at this concentration allowed in the EU for this product type? Answer PASS or VIOLATION for EU only.\n${JSON.stringify(cases.map(({ id, inci, cas, ppm, category }) => ({ id, inci, cas, ppm, percent: `${ppm / 10000}%`, category })))}`,
     schema,
     { system: "You are an EU cosmetics regulatory analyst. Use your knowledge of Regulation (EC) 1223/2009." },
@@ -73,10 +75,16 @@ const A = cases.map((c) => ruleVerdict(RULES, c));
 const B = cases.map((c) => ruleVerdict(EU_ANNEX_V_RULES, c));
 const results = [score("A. Hand-written rulebook (10 rules)", A, cases), score(`B. Argon-generated rulebook (${EU_ANNEX_V_RULES.length} rules)`, B, cases)];
 
+const HAIKU_RULES = "../lib/rules/generated/eu-annex-v.haiku.ts";
+if (existsSync(new URL(HAIKU_RULES, import.meta.url))) {
+  const { EU_ANNEX_V_RULES: haiku } = (await import(HAIKU_RULES)) as { EU_ANNEX_V_RULES: Rule[] };
+  results.push(score(`D. Haiku-generated rulebook (${haiku.length} rules)`, cases.map((c) => ruleVerdict(haiku, c)), cases));
+}
+
 if (!process.argv.includes("--no-direct")) {
   try {
     const d = await directVerdicts(cases);
-    results.push(score("C. Argon direct, no rule code", cases.map((c) => ({ verdict: d.get(c.id) ?? "PASS" })), cases));
+    results.push(score("C. Claude Haiku 5.5 direct, no rule code", cases.map((c) => ({ verdict: d.get(c.id) ?? "PASS" })), cases));
   } catch (e) {
     console.warn("direct baseline failed:", (e as Error).message.slice(0, 120));
   }
