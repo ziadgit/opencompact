@@ -53,7 +53,7 @@ export function overallFrom(rows: IngredientVerdict[], findings: LabelFinding[] 
   const out = {} as Overall;
   for (const j of JURISDICTIONS) {
     const label = findings
-      .filter((f) => f.jurisdiction === j && f.severity !== "OK")
+      .filter((f) => f.jurisdiction === j && (f.severity === "VIOLATION" || f.severity === "WARN"))
       .map((f) => f.severity as Verdict);
     out[j] = worst([...rows.map((r) => r.verdicts[j].verdict), ...label]);
   }

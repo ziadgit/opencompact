@@ -24,12 +24,13 @@ export const Ingredient = z.object({
 });
 export type Ingredient = z.infer<typeof Ingredient>;
 
+/** Typography fields are optional: a product page shows the claims, not how the warning is printed. */
 export const Label = z.object({
   frontClaim: z.string(),
-  warningText: z.string(),
-  warningPt: z.number(),
-  contrast: z.number(),
-  hiddenBehindPeel: z.boolean(),
+  warningText: z.string().optional(),
+  warningPt: z.number().optional(),
+  contrast: z.number().optional(),
+  hiddenBehindPeel: z.boolean().optional(),
 });
 export type Label = z.infer<typeof Label>;
 
@@ -74,7 +75,7 @@ export const AuditResult = z.object({
 export type AuditResult = z.infer<typeof AuditResult>;
 
 export const LabelFinding = z.object({
-  severity: z.enum(["VIOLATION", "WARN", "OK"]),
+  severity: z.enum(["VIOLATION", "WARN", "OK", "NOTE"]),
   jurisdiction: Jurisdiction,
   title: z.string(),
   citation: z.string(),

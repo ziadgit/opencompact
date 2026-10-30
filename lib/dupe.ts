@@ -78,7 +78,7 @@ export function deterministicDupe(product: ProductInput, audit: AuditResult = ru
     name: `${INVENTED_BRANDS[brandSeed % INVENTED_BRANDS.length]} ${title}`,
     ingredients,
     label: label
-      ? { ...label, frontClaim: newClaim, warningPt: Math.max(label.warningPt, 7), contrast: Math.max(label.contrast, 7), hiddenBehindPeel: false }
+      ? { ...label, frontClaim: newClaim, warningPt: Math.max(label.warningPt ?? 7, 7), contrast: Math.max(label.contrast ?? 7, 7), hiddenBehindPeel: false }
       : undefined,
   };
   const dupeAudit = ruleCheck(dupeProduct);
@@ -89,7 +89,7 @@ export function deterministicDupe(product: ProductInput, audit: AuditResult = ru
     original: spec(archetype, brand, title, label?.frontClaim ?? title, pal.original, label?.hiddenBehindPeel ? label.warningText : undefined),
     dupe: spec(archetype, dupeBrand, alreadyCompliant ? `${title} — Refined` : title, newClaim || title, pal.dupe),
     swaps,
-    newClaims: [newClaim, ...(label && (label.hiddenBehindPeel || label.warningPt < 6) ? ["Warning moved to the outer label at 7 pt, 7:1 contrast"] : [])].filter(Boolean),
+    newClaims: [newClaim, ...(label && (label.hiddenBehindPeel || (label.warningPt ?? 7) < 6) ? ["Warning moved to the outer label at 7 pt, 7:1 contrast"] : [])].filter(Boolean),
     dupeOverall: dupeAudit.overall,
     originalOverall: audit.overall,
     alreadyCompliant,

@@ -5,6 +5,7 @@ const SEV = {
   VIOLATION: { glyph: "✕", color: "var(--violation)" },
   WARN: { glyph: "!", color: "var(--review)" },
   OK: { glyph: "✓", color: "var(--pass)" },
+  NOTE: { glyph: "?", color: "var(--muted)" },
 } as const;
 
 export function LabelCard({ lint }: { lint: LabelLint }) {

@@ -77,9 +77,10 @@ export async function lintLabel(label: Label, category: Category, violatingIn: A
       }),
       { system: `Cite only from this rulebook or say "No specific rule found".\n${RULEBOOK}` },
     );
-    const all = [...findings.filter((f) => f.severity !== "OK"), ...extra.findings.slice(0, 2)].sort(bySeverity);
+    const all = [...findings.filter((f) => f.severity === "VIOLATION" || f.severity === "WARN"), ...extra.findings.slice(0, 2)].sort(bySeverity);
     // A clean label still gets a visible "OK" row rather than an empty card.
-    return { findings: all.length ? all : findings };
+    const notes = findings.filter((f) => f.severity === "NOTE");
+    return { findings: all.length ? [...all, ...notes] : findings };
   } catch (e) {
     warn("lint_label", e);
     return { findings };
@@ -87,7 +88,7 @@ export async function lintLabel(label: Label, category: Category, violatingIn: A
 }
 
 const bySeverity = (a: { severity: string }, b: { severity: string }) =>
-  ["VIOLATION", "WARN", "OK"].indexOf(a.severity) - ["VIOLATION", "WARN", "OK"].indexOf(b.severity);
+  ["VIOLATION", "WARN", "OK", "NOTE"].indexOf(a.severity) - ["VIOLATION", "WARN", "OK", "NOTE"].indexOf(b.severity);
 
 // ---------- dupe ----------
 
@@ -143,11 +144,25 @@ export async function draftMocraReport(product: ProductInput, adverseEvents: str
 
 // ---------- URL ----------
 
-export async function readProductUrl(url: string): Promise<ProductInput> {
+const UrlProduct = ProductInput.extend({
+  ingredientSource: z.string().describe("URL the ingredient list was read from, or empty if none was found"),
+  sourceNote: z.string().describe("One sentence: where the list came from, which shade/variant, and anything missing"),
+});
+export type UrlProduct = z.infer<typeof UrlProduct>;
+
+export async function readProductUrl(url: string): Promise<UrlProduct> {
   const product = await llmJSON(
-    `Read this product page: ${url}\nExtract the product name, category, the full INCI ingredient list (estimate ppm from list order if absent and set estimated: true), the front claims as label.frontClaim (use warningText "", warningPt 7, contrast 7, hiddenBehindPeel false if unknown), and the vessel archetype (compact, dropper or airless-pump). Set sourceUrl.`,
-    ProductInput,
-    { urlContext: true },
+    `Find this product and its full INCI ingredient list: ${url}
+
+1. Fetch the page. Many retailers (e.g. Sephora, Ulta) block automated fetching; that's expected.
+2. If the page is blocked or has no ingredient list, work out the brand, product and shade from the URL, search the web for "<brand> <product> ingredients", and fetch the brand's own product page, another retailer or an INCI database (e.g. INCIDecoder, Skinsort).
+3. If ingredients differ by shade, use the shade named in the URL; otherwise use the first shade listed and say which in sourceNote.
+   Include the "may contain" / "+/-" colorants (iron oxides, titanium dioxide, lakes, CI numbers) as ingredients too; compliance often depends on them.
+4. Only use ingredients you read on a page in this session. Never fill gaps from memory. If no page gives the full list, return the part you found (or none) and say so in sourceNote.
+
+Extract: name (brand + product), category, ingredients in list order (estimate ppm from list order: first ~300000, falling quickly, colorants and preservatives 1000–10000; set estimated: true), the marketing claims as label.frontClaim (omit warningPt, contrast and hiddenBehindPeel: a web page doesn't show how the warning is printed), the vessel archetype (compact, dropper or airless-pump), ingredientSource and sourceNote.`,
+    UrlProduct,
+    { web: true },
   );
   return { ...product, sourceUrl: url };
 }
@@ -157,7 +172,8 @@ export async function readProductUrl(url: string): Promise<ProductInput> {
 export const tools = [
   defineTool({
     name: "read_product_url",
-    description: "Fetch a real product page and extract a ProductInput (name, category, INCI list with ppm, claims, vessel).",
+    description:
+      "Read a product URL and extract a ProductInput (name, category, INCI list with ppm, claims, vessel). If the retailer blocks fetching, it finds the same product's ingredient list on the brand site or another source; ingredientSource and sourceNote say where it came from.",
     parameters: z.object({ url: z.string().describe("Product page URL") }),
     execute: async ({ url }) => readProductUrl(url),
   }),

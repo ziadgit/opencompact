@@ -16,7 +16,7 @@ export function findDrugWords(text: string): string[] {
 export function lintLabelRules(label: Label, _category: Category, violatingIn: Jurisdiction[] = []): LabelFinding[] {
   const out: LabelFinding[] = [];
 
-  if (label.warningPt < 6) {
+  if (label.warningPt !== undefined && label.warningPt < 6) {
     out.push({
       severity: "VIOLATION",
       jurisdiction: "US",
@@ -25,7 +25,7 @@ export function lintLabelRules(label: Label, _category: Category, violatingIn: J
       fix: "Set the mandatory warning at 6 pt or larger.",
     });
   }
-  if (label.contrast < 4.5) {
+  if (label.contrast !== undefined && label.contrast < 4.5) {
     out.push({
       severity: "VIOLATION",
       jurisdiction: "US",
@@ -75,8 +75,22 @@ export function lintLabelRules(label: Label, _category: Category, violatingIn: J
     }
   }
 
+  const measured = label.warningPt !== undefined && label.contrast !== undefined && label.hiddenBehindPeel !== undefined;
   if (!out.length) {
-    out.push({ severity: "OK", jurisdiction: "US", title: "Warning is legible, visible and claims are cosmetic", citation: PROMINENCE, fix: "No change needed." });
+    out.push(
+      measured
+        ? { severity: "OK", jurisdiction: "US", title: "Warning is legible, visible and claims are cosmetic", citation: PROMINENCE, fix: "No change needed." }
+        : { severity: "OK", jurisdiction: "US", title: "Claims are cosmetic, with no drug or absolute wording", citation: "FD&C Act §201(g)(1)", fix: "No change needed." },
+    );
+  }
+  if (!measured) {
+    out.push({
+      severity: "NOTE",
+      jurisdiction: "US",
+      title: "Warning size, contrast and placement not checked",
+      citation: PROMINENCE,
+      fix: "A product page doesn't show how the warning is printed. Check the physical package: at least 6 pt, 4.5:1 contrast, not under a peel-off.",
+    });
   }
   return out;
 }

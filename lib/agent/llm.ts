@@ -12,7 +12,13 @@ function ai() {
   return client;
 }
 
-type Opts = { system?: string; urlContext?: boolean };
+type Opts = { system?: string; web?: boolean };
+
+// Anthropic's fetcher honours site blocks; when a retailer blocks it, search finds the same product elsewhere.
+const WEB_TOOLS: Anthropic.ToolUnion[] = [
+  { type: "web_fetch_20250910", name: "web_fetch", max_uses: 4 },
+  { type: "web_search_20250305", name: "web_search", max_uses: 3 },
+];
 
 async function guard() {
   if (!(await canSpend())) throw new Error("daily AI budget used up");
@@ -27,18 +33,26 @@ function record(u: Anthropic.Usage) {
   });
 }
 
-/** One structured-output call to Claude Haiku 5.5, validated with zod. `urlContext` lets it fetch URLs in the prompt. */
+/** One structured-output call to Claude Haiku 5.5, validated with zod. `web` lets it fetch and search the web. */
 export async function llmJSON<T>(prompt: string, schema: z.ZodType<T>, opts: Opts = {}): Promise<T> {
   await guard();
-  const res = await ai().messages.parse({
-    model: MODEL,
-    max_tokens: 16000,
-    system: opts.system,
-    output_config: { effort: "low", format: zodOutputFormat(schema) },
-    tools: opts.urlContext ? [{ type: "web_fetch_20250910", name: "web_fetch", max_uses: 2 }] : undefined,
-    messages: [{ role: "user", content: prompt }],
-  });
-  await record(res.usage);
+  const messages: Anthropic.MessageParam[] = [{ role: "user", content: prompt }];
+  let res;
+  // Server tools can pause a long turn; send it back to let the model finish.
+  for (let i = 0; i < 3; i++) {
+    res = await ai().messages.parse({
+      model: MODEL,
+      max_tokens: 16000,
+      system: opts.system,
+      output_config: { effort: "low", format: zodOutputFormat(schema) },
+      tools: opts.web ? WEB_TOOLS : undefined,
+      messages,
+    });
+    await record(res.usage);
+    if (res.stop_reason !== "pause_turn") break;
+    messages.push({ role: "assistant", content: res.content });
+  }
+  if (!res) throw new Error("no response");
   if (res.stop_reason === "refusal") throw new Error("model declined the request");
   if (res.parsed_output == null) throw new Error(`no structured output (stop_reason: ${res.stop_reason})`);
   return schema.parse(res.parsed_output);
