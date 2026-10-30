@@ -75,7 +75,9 @@ export default function About() {
       {/* 1. Hero */}
       <section className="relative px-4 pb-16 pt-6 sm:px-8">
         <header className="mx-auto flex max-w-[1240px] items-center justify-between">
-          <Link href="/" className="font-serif text-[20px] text-ink">
+          <Link href="/" className="inline-flex items-center gap-2 font-serif text-[20px] text-ink">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/brand/mark.svg" alt="" width={24} height={24} />
             OpenCompact
           </Link>
           <Link href="/" className="rounded-full border border-line px-4 py-1.5 text-[14px] text-ink transition-colors hover:bg-ink hover:text-bg">

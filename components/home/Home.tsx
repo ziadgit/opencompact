@@ -187,7 +187,9 @@ export function Home() {
     <div className="flex min-h-dvh flex-col">
       <ToolRenderers />
       <header className="mx-auto flex w-full max-w-[1180px] items-center justify-between px-4 py-5 sm:px-8">
-        <Link href="/" className="font-serif text-[20px] tracking-tight text-ink">
+        <Link href="/" className="inline-flex items-center gap-2 font-serif text-[20px] tracking-tight text-ink">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/brand/mark.svg" alt="" width={24} height={24} />
           OpenCompact
         </Link>
         <nav className="flex items-center gap-4">

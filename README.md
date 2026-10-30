@@ -1,8 +1,38 @@
+<p align="center">
+  <a href="https://opencompact.vercel.app">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/banner-dark.png">
+      <img alt="OpenCompact — Is it legal to sell?" src="docs/banner-light.png" width="100%">
+    </picture>
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://opencompact.vercel.app"><img alt="Live demo" src="https://img.shields.io/badge/live-opencompact.vercel.app-C9A86A?style=flat-square&labelColor=1C1A17"></a>
+  <a href="https://opencompact.vercel.app/about"><img alt="Explainer" src="https://img.shields.io/badge/explainer-%2Fabout-5E7B5A?style=flat-square&labelColor=1C1A17"></a>
+  <img alt="Next.js 16" src="https://img.shields.io/badge/Next.js-16-1C1A17?style=flat-square">
+  <img alt="Claude Haiku 5.5" src="https://img.shields.io/badge/model-Claude%20Haiku%205.5-D9572B?style=flat-square&labelColor=1C1A17">
+  <img alt="CopilotKit v2" src="https://img.shields.io/badge/agent-CopilotKit%20v2-2443A6?style=flat-square&labelColor=1C1A17">
+  <img alt="Spend cap" src="https://img.shields.io/badge/AI%20spend-capped%20at%20%245%2Fday-7A736A?style=flat-square&labelColor=1C1A17">
+</p>
+
 # OpenCompact
 
 Paste a beauty product (link, ingredient list, or question). An AI agent tells you whether it can be sold in the **US (FDA)**, **California** and the **EU**, explains why with citations, and designs a **compliant dupe** you can inspect in 3D next to the original. Every result is a draft, not legal advice.
 
 Live: [opencompact.vercel.app](https://opencompact.vercel.app) · What it is, explained: [opencompact.vercel.app/about](https://opencompact.vercel.app/about)
+
+<table>
+  <tr>
+    <td width="42%"><img alt="Verdict matrix and label review" src="docs/screenshots/verdict.png"></td>
+    <td><img alt="3D dupe stage: the original next to its compliant dupe" src="docs/screenshots/dupe.png"><br><br><img alt="The /about explainer" src="docs/screenshots/about.png"></td>
+  </tr>
+  <tr>
+    <td><sub>Verdict matrix with citations, plus the label review</sub></td>
+    <td><sub>The 3D dupe stage, and the <a href="https://opencompact.vercel.app/about">/about</a> explainer</sub></td>
+  </tr>
+</table>
+
 
 ## Setup
 1. `npm install`

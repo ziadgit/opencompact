@@ -22,3 +22,4 @@ Autonomous build decisions, one line each.
 - The shipped EU Annex V rulebook stays the Argon-generated one (100% on the eval). `rules:gen` now writes a Haiku version to `eu-annex-v.haiku.ts` for comparison: Haiku-generated 96.6%, Haiku direct 91% (missed 7/47 violations). Argon v1 results kept in `eval-results.argon.json`.
 - Haiku sometimes answered "None" for the dupe brand on unsafe products; the rulebook brand is kept in that case, and the prompt now says to always invent one.
 - MoCRA Markdown now renders GFM tables (remark-gfm).
+- Branding: hand-drawn SVG mark (an open compact with a US · CA · EU verdict halo) used as favicon, header logo and README banner; banners, social preview and apple icon rendered from HTML with the app fonts.

@@ -7,6 +7,7 @@ const sans = Inter({ variable: "--font-inter", subsets: ["latin"] });
 const mono = JetBrains_Mono({ variable: "--font-jetbrains", subsets: ["latin"] });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://opencompact.vercel.app"),
   title: "OpenCompact — Is it legal to sell?",
   description:
     "Check cosmetics against US FDA, California and EU rules, then design a compliant dupe.",
